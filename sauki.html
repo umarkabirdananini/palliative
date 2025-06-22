@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Shagon Sauki - Sales Screen</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container py-5">
+  <h2 class="mb-4 text-center">Shagon Sauki Na Amadun Alu</h2>
+
+  <!-- Beneficiary Search -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <label for="computerNumber" class="form-label">Enter Beneficiary Computer Number</label>
+      <input type="text" id="computerNumber" class="form-control mb-2" placeholder="e.g. 123456" />
+      <button class="btn btn-primary" onclick="fetchBeneficiary()">Fetch Details</button>
+    </div>
+  </div>
+
+  <!-- Beneficiary Info -->
+  <div class="card mb-4 d-none" id="beneficiaryCard">
+    <div class="card-body">
+      <h5>Beneficiary Info</h5>
+      <p><strong>Name:</strong> <span id="benName"></span></p>
+      <p><strong>Salary:</strong> ₦<span id="benSalary"></span></p>
+      <p><strong>Loan Eligible:</strong> <span id="loanStatus"></span></p>
+      <p><strong>Purchase Mode:</strong>
+        <select class="form-select" id="purchaseMode" onchange="resetCart()">
+          <option value="spot">Paying at Spot</option>
+          <option value="loan">Taking on Loan</option>
+        </select>
+      </p>
+    </div>
+  </div>
+
+  <!-- Cart & Product List -->
+  <div class="card mb-4 d-none" id="productSection">
+    <div class="card-body">
+      <h5>Add Items</h5>
+      <div class="row g-2">
+        <div class="col-md-3">
+          <select class="form-select" id="productSelect">
+            <option value="50kg">Rice 50kg - ₦50,000</option>
+            <option value="25kg">Rice 25kg - ₦25,000</option>
+            <option value="10kg">Rice 10kg - ₦12,500</option>
+            <option value="5kg">Rice 5kg - ₦6,250</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <input type="number" min="1" value="1" id="productQty" class="form-control" />
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-success" onclick="addToCart()">Add to Cart</button>
+        </div>
+      </div>
+
+      <!-- Cart Display -->
+      <div class="mt-4">
+        <h6>Cart</h6>
+        <ul class="list-group" id="cartList"></ul>
+        <p class="mt-3"><strong>Total:</strong> ₦<span id="cartTotal">0</span></p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let beneficiary = {};
+  let cart = [];
+  const productPrices = {
+    "50kg": 50000,
+    "25kg": 25000,
+    "10kg": 12500,
+    "5kg": 6250
+  };
+
+  function fetchBeneficiary() {
+    const computerNumber = document.getElementById('computerNumber').value;
+    
+    // Simulated response (replace with Laravel AJAX call)
+    beneficiary = {
+      name: "John Musa",
+      salary: 120000, // NGN
+      loanEligible: true,
+      previousPurchases: []
+    };
+
+    // Fill UI
+    document.getElementById('benName').innerText = beneficiary.name;
+    document.getElementById('benSalary').innerText = beneficiary.salary.toLocaleString();
+    document.getElementById('loanStatus').innerText = beneficiary.loanEligible ? "Yes" : "No";
+
+    document.getElementById('beneficiaryCard').classList.remove('d-none');
+    document.getElementById('productSection').classList.remove('d-none');
+    resetCart();
+  }
+
+  function resetCart() {
+    cart = [];
+    updateCart();
+  }
+
+  function addToCart() {
+    const mode = document.getElementById('purchaseMode').value;
+    const selected = document.getElementById('productSelect').value;
+    const quantity = parseInt(document.getElementById('productQty').value);
+    const price = productPrices[selected];
+    const totalToAdd = price * quantity;
+
+    const cartTotal = getCartTotal();
+
+    if (mode === 'loan' && totalToAdd + cartTotal > (beneficiary.salary / 3)) {
+      alert("Loan limit exceeded: You can only purchase up to 1/3 of salary.");
+      return;
+    }
+
+    if (mode === 'spot' && totalToAdd + cartTotal > 20000) {
+      alert("Spot payment limit exceeded: Max ₦20,000 per week.");
+      return;
+    }
+
+    cart.push({ item: selected, qty: quantity, price });
+    updateCart();
+  }
+
+  function getCartTotal() {
+    return cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  }
+
+  function updateCart() {
+    const cartList = document.getElementById('cartList');
+    const total = getCartTotal();
+    cartList.innerHTML = '';
+    cart.forEach((item, i) => {
+      cartList.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center">
+        ${item.qty} × ${item.item} @ ₦${item.price.toLocaleString()}
+        <button class="btn btn-sm btn-danger" onclick="removeItem(${i})">Remove</button>
+      </li>`;
+    });
+    document.getElementById('cartTotal').innerText = total.toLocaleString();
+  }
+
+  function removeItem(index) {
+    cart.splice(index, 1);
+    updateCart();
+  }
+</script>
+
+</body>
+</html>
